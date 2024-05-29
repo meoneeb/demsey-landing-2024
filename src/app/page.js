@@ -1,95 +1,100 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client'
+import React, { useState } from 'react';
+import axios from 'axios';
 
 export default function Home() {
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    street: '',
+    city: '',
+    state: '',
+    zip: '',
+    year: '',
+    make: '',
+    model: ''
+  });
+  const [recipientEmail, setRecipientEmail] = useState('oneebfaisal@gmail.com');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+
+  const generateADFXML = (data) => {
+    return `
+      <adf>
+        <prospect>
+          <requestdate>${new Date().toISOString()}</requestdate>
+          <status>New</status>
+          <vehicle>
+            <year>${data.year}</year>
+            <make>${data.make}</make>
+            <model>${data.model}</model>
+          </vehicle>
+          <customer>
+            <contact>
+              <name part="first">${data.firstName}</name>
+              <name part="last">${data.lastName}</name>
+              <email>${data.email}</email>
+              <phone>${data.phone}</phone>
+            </contact>
+            <address>
+              <street line="1">${data.street}</street>
+              <city>${data.city}</city>
+              <regioncode>${data.state}</regioncode>
+              <postalcode>${data.zip}</postalcode>
+            </address>
+          </customer>
+        </prospect>
+      </adf>
+    `;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const adfXml = generateADFXML(formData);
+    
+    try {
+      const response = await axios.post('/api/send-email', {
+        email: 'oneebfaisal@gmail.com', //recipientEmail
+        xmlData: adfXml
+      });
+      alert('Email sent successfully');
+    } catch (error) {
+      alert('Failed to send email');
+      console.error(error);
+    }
+  };
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+    <div>
+      <h1>Export Lead to ADF-XML and Send via Email</h1>
+      <form onSubmit={handleSubmit}>
+        <h2>Customer Information</h2>
+        <input type="text" name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleChange} required />
+        <input type="text" name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleChange} required />
+        <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} required />
+        <input type="tel" name="phone" placeholder="Phone" value={formData.phone} onChange={handleChange} required />
+        
+        <h2>Address</h2>
+        <input type="text" name="street" placeholder="Street" value={formData.street} onChange={handleChange} required />
+        <input type="text" name="city" placeholder="City" value={formData.city} onChange={handleChange} required />
+        <input type="text" name="state" placeholder="State" value={formData.state} onChange={handleChange} required />
+        <input type="text" name="zip" placeholder="ZIP Code" value={formData.zip} onChange={handleChange} required />
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+        <h2>Vehicle Information</h2>
+        <input type="text" name="year" placeholder="Year" value={formData.year} onChange={handleChange} required />
+        <input type="text" name="make" placeholder="Make" value={formData.make} onChange={handleChange} required />
+        <input type="text" name="model" placeholder="Model" value={formData.model} onChange={handleChange} required />
 
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+        <button type="submit">Send Email</button>
+      </form>
+    </div>
   );
 }
